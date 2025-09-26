@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "MyCustomCamera.h"
+#include "ring.h"
 
 class ofApp : public ofBaseApp{
 
@@ -21,9 +22,16 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+
 		
 		int asteroids;
-		
+		glm::vec3 circleCentre;
+		float circleRadius;
+		int gatesPassed;
+
+		std::vector<ring*> rings;
+
+
 		ofNode body[500];
 
 		MyCustomCamera cam;
