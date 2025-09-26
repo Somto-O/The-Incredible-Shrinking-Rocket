@@ -1,92 +1,93 @@
 #include "MyCustomCamera.h"
-#include "ofMain.h"
 #include <glm/gtc/quaternion.hpp>
-
+#include <glm/gtx/quaternion.hpp> // allows quat * vec3
 
 MyCustomCamera::MyCustomCamera() {
-    movementSpeed = 50.0f; // units per second
-    rotationSpeed = 0.05f;   // rads per second
-    position = glm::vec3(0, 0, 0);
-    orientation = glm::quat(1, 0, 0, 0); // nothing
+	movementSpeed = 500.0f; // units per second
+	rotationSpeed = 1.0f; // radians per second (set to a reasonable value)
+	position = glm::vec3(0.0f, 0.0f, 0.0f);
+	orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); // identity quaternion (w,x,y,z)
 
-    BASE_SIDE = glm::vec3(1, 0, 0);
-    BASE_UP = glm::vec3(0, 1, 0);
-    BASE_FORWARD = glm::vec3(0, 0, 1); // don't need to store all three, note
+	// Base axes (local model axes before orientation)
+	BASE_SIDE = glm::vec3(1.0f, 0.0f, 0.0f); // +X
+	BASE_UP = glm::vec3(0.0f, 1.0f, 0.0f); // +Y
+	BASE_FORWARD = glm::vec3(0.0f, 0.0f, -1.0f); // -Z (forward according to right hand rule)
+
+	// initialize ofCamera with our starting transform
+	setPosition(position);
+	setOrientation(orientation);
 }
 
 void MyCustomCamera::update(float deltaTime) {
-    glm::vec3 move(0.0f);
+	glm::vec3 move(0.0f);
 
-    // WASD movement
-    if (ofGetKeyPressed('w')) move += getqForward();
-    if (ofGetKeyPressed('s')) move -= getqForward();
-    if (ofGetKeyPressed('a')) move -= getqSide();
-    if (ofGetKeyPressed('d')) move += getqSide();
-    if (ofGetKeyPressed('q')) move += getqUp();
-    if (ofGetKeyPressed('e')) move -= getqUp();
+	// WASD movement relative to the camera's local axes
+	if (ofGetKeyPressed('w')) move += getqForward();
+	if (ofGetKeyPressed('s')) move -= getqForward();
+	if (ofGetKeyPressed('a')) move -= getqSide();
+	if (ofGetKeyPressed('d')) move += getqSide();
+	if (ofGetKeyPressed('q')) move += getqUp();
+	if (ofGetKeyPressed('e')) move -= getqUp();
 
-    if (glm::length(move) > 0.0f)  // did it move at all?
-    {
-        move = glm::normalize(move) * movementSpeed * deltaTime;
-        position = position + move;
-    }
+	if (glm::length(move) > 0.0f) {
+		move = glm::normalize(move) * movementSpeed * deltaTime;
+		position += move;
+	}
 
-    float rotationamt = rotationSpeed * deltaTime;
+	float rotationamt = rotationSpeed * deltaTime;
 
-    // IJKL rotation
-    if (ofGetKeyPressed('i')) pitch(rotationamt);
-    if (ofGetKeyPressed('k')) pitch(-rotationamt);
-    if (ofGetKeyPressed('j')) yaw(rotationamt);
-    if (ofGetKeyPressed('l')) yaw(-rotationamt);
-    if (ofGetKeyPressed('u')) roll(rotationamt);
-    if (ofGetKeyPressed('o')) roll(-rotationamt);
-    orientation = orientation / length(orientation); // normalize
+	// IJKL rotation
+	if (ofGetKeyPressed('i')) pitch(rotationamt);
+	if (ofGetKeyPressed('k')) pitch(-rotationamt);
+	if (ofGetKeyPressed('j')) yaw(rotationamt);
+	if (ofGetKeyPressed('l')) yaw(-rotationamt);
+	if (ofGetKeyPressed('u')) roll(rotationamt);
+	if (ofGetKeyPressed('o')) roll(-rotationamt);
 
-    // need to set ofCamera parameters using internal position, orientation
-    setPosition(position);
-    setOrientation(orientation);
+	// normalize quaternion (avoid drift)
+	orientation = glm::normalize(orientation);
 
+	// publish to ofCamera (OF versions that include glm support accept glm::quat)
+	setPosition(position);
+	setOrientation(orientation);
 }
 
-// TODO: getqForward, getqSide, getqUp;
-// TODO: pitch, yaw, roll
-
+// Rotate around local side (X)
 void MyCustomCamera::pitch(float amt) {
-    glm::quat change = glm::angleAxis(amt, glm::vec3(0,1,0));
-    orientation = change*orientation;
-
+	// axis in world coordinates = current local side vector
+	glm::vec3 axis = getqSide();
+	glm::quat change = glm::angleAxis(amt, glm::normalize(axis));
+	orientation = glm::normalize(change * orientation);
 }
 
-
+// Rotate around local up (Y)
 void MyCustomCamera::yaw(float amt) {
-    glm::vec3 silly = glm::vec3(ofRandom(10), ofRandom(10), ofRandom(10));
-    glm::quat change = glm::angleAxis(amt, silly);
-    orientation = orientation*change;
-    
+	glm::vec3 axis = getqUp();
+	glm::quat change = glm::angleAxis(amt, glm::normalize(axis));
+	orientation = glm::normalize(change * orientation);
 }
 
-
+// Rotate around local forward (Z)
 void MyCustomCamera::roll(float amt) {
-    glm::vec3 silly = glm::vec3(ofRandom(10), ofRandom(10), ofRandom(10));
-    glm::quat change = glm::angleAxis(amt, silly);
-    orientation = change;
+	glm::vec3 axis = getqForward();
+	glm::quat change = glm::angleAxis(amt, glm::normalize(axis));
+	orientation = glm::normalize(change * orientation);
 }
 
+// local forward (rotated base forward)
 glm::vec3 MyCustomCamera::getqForward() {
-
-
-    return ((-BASE_FORWARD)); // because we look down -z axis
+	glm::vec3 f = orientation * BASE_FORWARD; // rotate base by quaternion
+	return glm::normalize(f);
 }
 
-
+// local right/side
 glm::vec3 MyCustomCamera::getqSide() {
-
-    return BASE_SIDE;
+	glm::vec3 s = orientation * BASE_SIDE;
+	return glm::normalize(s);
 }
 
-
+// local up
 glm::vec3 MyCustomCamera::getqUp() {
-
-    return BASE_UP;
+	glm::vec3 u = orientation * BASE_UP;
+	return glm::normalize(u);
 }
-
