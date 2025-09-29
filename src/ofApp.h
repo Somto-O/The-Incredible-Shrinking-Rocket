@@ -25,8 +25,6 @@ class ofApp : public ofBaseApp{
 
 		
 		int asteroids;
-		glm::vec3 circleCentre;
-		float circleRadius;
 		int gatesPassed;
 
 		std::vector<ring*> rings;

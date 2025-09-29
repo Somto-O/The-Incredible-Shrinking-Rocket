@@ -1,12 +1,14 @@
 
 #include "ring.h"
 
-ring::ring(float R, float r, int majorRes, int minorRes, glm::vec3 pos){
+ring::ring(float R, float r, int majorRes, int minorRes, glm::vec3 pos, glm::vec3 rot){
 	outerR = R;
 	innerR = r;
 	outerRes = majorRes;
 	innerRes = minorRes;
 	position = pos;
+	rotation = rot;
+
 
 	createRing();
 }
@@ -27,9 +29,9 @@ ofMesh ring::createRing() {
 				sin(phi));
 
 			glm::vec3 v = glm::vec3( //now sets torus origin at a given point and not at (0, 0, 0)
-				outerR * cos(theta) + innerR * N.x + position.x,
-				outerR * sin(theta) + innerR * N.y + position.y,
-				innerR * N.z + position.z);
+				outerR * cos(theta) + innerR * N.x,
+				outerR * sin(theta) + innerR * N.y,
+				innerR * N.z);
 
 
 			ofColor c = ofColor(255 * (i + 0.001) / outerRes, 255 * (j + 0.001) / innerRes, 255 * 0.5);
@@ -63,6 +65,38 @@ ofMesh ring::createRing() {
 	return mesh;
 }
 
-void ring::draw() {
+
+void ring::draw(bool debugCollision = false) {
+	ofPushMatrix();
+	ofTranslate(position);
+	ofRotateDeg(rotation.x, 1, 0, 0);
+	ofRotateDeg(rotation.y, 0, 1, 0);
+	ofRotateDeg(rotation.z, 0, 0, 1);
+
 	mesh.draw();
+
+	if (debugCollision) {
+		ofPushStyle();
+		ofNoFill();
+		ofSetColor(0, 255, 0, 150); // semi-transparent green
+
+		// draw a circle in XY plane as the “collision plane”
+		float radiusOuter = outerR + innerR;
+		float radiusInner = outerR - innerR;
+		ofDrawCircle(glm::vec3(0, 0, 0), radiusOuter);
+		ofDrawCircle(glm::vec3(0, 0, 0), radiusInner);
+
+		ofPopStyle();
+	}
+
+	ofPopMatrix();
+}
+
+glm::vec3 ring::getNormal() const {
+	// start with local Z axis
+	glm::mat4 rot(1.0f);
+	rot = glm::rotate(rot, ofDegToRad(rotation.x), glm::vec3(1, 0, 0));
+	rot = glm::rotate(rot, ofDegToRad(rotation.y), glm::vec3(0, 1, 0));
+	rot = glm::rotate(rot, ofDegToRad(rotation.z), glm::vec3(0, 0, 1));
+	return glm::normalize(glm::vec3(rot * glm::vec4(0, 0, 1, 0))); // local forward
 }
