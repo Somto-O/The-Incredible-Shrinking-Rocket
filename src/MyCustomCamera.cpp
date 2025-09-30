@@ -47,9 +47,16 @@ void MyCustomCamera::update(float deltaTime) {
 	// normalize quaternion (avoid drift)
 	orientation = glm::normalize(orientation);
 
-	// publish to ofCamera (OF versions that include glm support accept glm::quat)
-	setPosition(position);
-	setOrientation(orientation);
+	glm::vec3 backOffset = -getqForward() * 200.0f + getqUp() * 80.0f;
+	glm::vec3 camPos = position + backOffset;
+
+	// publish to ofCamera, first person
+	//setPosition(position);
+	//setOrientation(orientation);
+
+	// third person
+	setPosition(camPos);
+	lookAt(position, getqUp());
 }
 
 // Rotate around local side (X)
