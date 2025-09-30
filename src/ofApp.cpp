@@ -195,7 +195,7 @@ void ofApp::update() {
 			gatesPassed++;
 			cout << "Gate passed! Total: " << gatesPassed << endl;
 
-			// If there’s another ring after this one, set it as the next goal
+			// If there's another ring after this one, set it as the next goal
 			if (i + 1 < rings.size()) {
 				rings[i + 1]->setAsNext(true);
 			}
@@ -276,7 +276,9 @@ void ofApp::draw(){
 	float angleRad = acos(dot);
 	float angleDeg = glm::degrees(angleRad);
 
+
 	//ship.draw();
+
 	// draw the ship cube
 	ofPushMatrix();
 	ofPushStyle(); // <---- save color/material state
