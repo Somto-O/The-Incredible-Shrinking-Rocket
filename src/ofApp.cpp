@@ -164,7 +164,7 @@ void ofApp::update() {
 			gatesPassed++;
 			cout << "Gate passed! Total: " << gatesPassed << endl;
 
-			// If there’s another ring after this one, set it as the next goal
+			// If there's another ring after this one, set it as the next goal
 			if (i + 1 < rings.size()) {
 				rings[i + 1]->setAsNext(true);
 			}
@@ -209,6 +209,42 @@ void ofApp::draw(){
 		ofPopStyle();
 	}
 
+	glm::vec3 pos = cam.getPosition();
+	glm::vec3 forward = cam.getqForward(); // camera's local forward (unit)
+	glm::vec3 modelForward = glm::vec3(0.0f, 0.0f, -1.0f); // our cube model faces -Z by convention
+
+	// compute axis/angle to rotate modelForward -> forward
+	glm::vec3 axis = glm::cross(modelForward, forward);
+	float dot = glm::dot(modelForward, forward);
+	// clamp dot to [-1,1] to be numerically safe
+	if (dot > 1.0f) dot = 1.0f;
+	if (dot < -1.0f) dot = -1.0f;
+	float angleRad = acos(dot);
+	float angleDeg = glm::degrees(angleRad);
+
+	ship.draw();
+	// draw the ship cube
+	ofPushMatrix();
+	ofPushStyle(); // <---- save color/material state
+
+	ofTranslate(pos.x, pos.y, pos.z);
+
+	// handle nearly parallel/opposite cases robustly
+	if (glm::length(axis) < 1e-6f) {
+		if (dot < 0.0f) {
+			ofRotateDeg(180.0f, 0.0f, 1.0f, 0.0f);
+		}
+	} else {
+		axis = glm::normalize(axis);
+		ofRotateDeg(angleDeg, axis.x, axis.y, axis.z);
+	}
+
+	ofSetColor(255, 150, 100); // ship color
+	float cubeSize = 40.0f;
+	ofDrawBox(0.0f, 0.0f, 0.0f, cubeSize);
+
+	ofPopStyle(); // <---- restore color/material state
+	ofPopMatrix();
 
 	cam.end();
 }
