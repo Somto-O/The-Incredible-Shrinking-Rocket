@@ -7,6 +7,9 @@ void ofApp::setup(){
 	/* -z is forward from camera start
 	y is above camera start
 	x is to the right of camera start */
+	ofResetElapsedTimeCounter(); // Start timer here
+
+	speed = 0.1; // Used in calculation with enemies to player
 	asteroids = 200;
 	for (int i = 0; i < asteroids; i++)
 	{
@@ -14,21 +17,22 @@ void ofApp::setup(){
 			glm::vec3(
 				ofRandom(-800,800),
 				ofRandom(-800,800),
-				ofRandom(-800,800))); // random somwhere in space
+				ofRandom(-800,800))); // Random somewhere in space
 	}
 
 
 	gatesPassed = 0;
 	cout << gatesPassed << endl;
 
-	started = false; //determines if the player has through the first gate
+	started = false; // Determines if the player has gone through the first gate
 
 
 	ring* r;
 	glm::vec3 pos;
 	glm::vec3 rot;
 
-	ofSpherePrimitive * s;
+	ofSpherePrimitive* s;
+	ofSpherePrimitive* e;
 
 	//checkpoint 1
 	pos = glm::vec3(0, 50, -400);
@@ -123,11 +127,38 @@ void ofApp::setup(){
 	s->setPosition(glm::vec3(100, -550, 275));
 	powerups.push_back(s);
 
+	//////////////////////////////////////////////
+
+	//enemy created in some corners of map
+	e = new ofSpherePrimitive();
+	e->setScale(0.3);
+	e->setPosition(glm::vec3(0, 0, -800)); // Furthest part of map in front of player
+	enemies.push_back(e);
+
+	e = new ofSpherePrimitive();
+	e->setScale(0.3);
+	e->setPosition(glm::vec3(-800, -800, 0)); // Bottom y and furthest left of map compared to player in centre
+	enemies.push_back(e);
+
+	e = new ofSpherePrimitive();
+	e->setScale(0.3);
+	e->setPosition(glm::vec3(800, 800, 800)); // Top y and furthest right of map and back behind player
+	enemies.push_back(e);
+
+	e = new ofSpherePrimitive();
+	e->setScale(0.3);
+	e->setPosition(glm::vec3(800, -800, 800)); // Bottom y and furthest right of map and back behind player
+	enemies.push_back(e);
+
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
 	cam.update(0.016); // 60 fps //120fps on my pc
+
+	float delta_time = ofGetElapsedTimef(); // Store the amount of time in between the last reset
+	ofResetElapsedTimeCounter; // Reset so it can be recounted when update reruns next
+
 
 	if (started)
 		timeElapsed += 0.008;
@@ -171,12 +202,12 @@ void ofApp::update() {
 
 			delete r;
 			rings.erase(rings.begin() + i);
-			break; //stops indexing out of range error
+			break; // Stops indexing out of range error
 		}
 	}
 
 	if (rings.size() == 0 && started == true) {
-		started = false; //race has finished
+		started = false; // Race has finished
 		cout << "Race Finished!!! Here is your time: " << timeElapsed << " seconds" << endl;
 	}
 
@@ -190,6 +221,22 @@ void ofApp::update() {
 		}
 	}
 
+	// Enemy tracking and collision
+	for (int i = 0; i < enemies.size(); i++) {
+		glm::vec3 e2p = cam.getPosition() - enemies[i]->getPosition(); // e2p is the enemy to player vector
+		glm::vec3 dir = glm::normalize(e2p);
+		float dist = glm::length(e2p);
+
+		enemies[i]->setPosition(enemies[i]->getPosition() + dir * speed * delta_time); // Move towards player
+
+		if (glm::distance(enemies[i]->getPosition(), cam.getPosition()) < enemies[i]->getRadius()) { // collision check
+			cout << "Hit by enemy! GAME OVER" << endl;
+			ofExit(); // Closes the game
+
+		}
+
+	}
+
 }
 
 //--------------------------------------------------------------
@@ -200,12 +247,19 @@ void ofApp::draw(){
 		body[i].draw();
 
 	for (ring* ring : rings)
-		ring->draw(true); //draw every created ring
+		ring->draw(true);
 
 	for (ofSpherePrimitive* powerup : powerups) {
 		ofPushStyle();
 		ofSetColor(255, 242, 59);
 		powerup->draw();
+		ofPopStyle();
+	}
+
+	for (ofSpherePrimitive * enemy : enemies) {
+		ofPushStyle();
+		ofSetColor(240, 20, 20);
+		enemy->draw();
 		ofPopStyle();
 	}
 
@@ -222,7 +276,9 @@ void ofApp::draw(){
 	float angleRad = acos(dot);
 	float angleDeg = glm::degrees(angleRad);
 
-	ship.draw();
+
+	//ship.draw();
+
 	// draw the ship cube
 	ofPushMatrix();
 	ofPushStyle(); // <---- save color/material state
@@ -245,6 +301,7 @@ void ofApp::draw(){
 
 	ofPopStyle(); // <---- restore color/material state
 	ofPopMatrix();
+
 
 	cam.end();
 }

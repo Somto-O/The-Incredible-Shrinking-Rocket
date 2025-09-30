@@ -28,9 +28,11 @@ class ofApp : public ofBaseApp{
 		int gatesPassed;
 		float timeElapsed;
 		bool started;
+		float speed;
 
 		std::vector<ring*> rings;
-		std::vector<ofSpherePrimitive*> powerups; 
+		std::vector<ofSpherePrimitive*> powerups;
+		std::vector<ofSpherePrimitive*> enemies;
 
 
 		ofNode body[500];
