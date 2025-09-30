@@ -28,6 +28,7 @@ class ofApp : public ofBaseApp{
 		int gatesPassed;
 
 		std::vector<ring*> rings;
+		std::vector<ofSpherePrimitive*> powerups; 
 
 
 		ofNode body[500];

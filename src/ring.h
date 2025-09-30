@@ -1,11 +1,12 @@
 #pragma once
 #include "ofMain.h"
 
-class ring{
+class ring {
 	public:
 		ring(float, float, int, int, glm::vec3 pos, glm::vec3 rot);
 		ofMesh createRing(); //from first assignment
 		void draw(bool flag);
+		void setAsNext(bool flag) { nextGoal = flag; }
 		glm::vec3 getNormal() const;
 
 		glm::vec3 getPosition() { return position; }
@@ -14,6 +15,7 @@ class ring{
 		int getOuterRes() { return outerRes; }
 		int getInnerRes() { return innerRes; }
 		glm::vec3 getRotation() { return rotation; }
+		bool getNext() { return nextGoal; }
 
 	private:
 		ofMesh mesh;
@@ -23,5 +25,6 @@ class ring{
 		float innerR;
 		int outerRes;
 		int innerRes;
+		bool nextGoal;
 };
 

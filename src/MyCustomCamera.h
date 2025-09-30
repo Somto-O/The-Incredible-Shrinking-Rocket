@@ -18,6 +18,14 @@ public:
 	void roll(float a); // rotate about local forward (Z) - tilt
 	void yaw(float a); // rotate about local up (Y) - turn left/right
 
+	//setters
+	void setSpeed(float speed) { movementSpeed = speed; }
+
+	// getters
+	glm::vec3 getPosition() { return position; }
+	glm::quat getOrientation() { return orientation; }
+	float getSpeed() { return movementSpeed; }
+
 private:
 	float movementSpeed;
 	float rotationSpeed;

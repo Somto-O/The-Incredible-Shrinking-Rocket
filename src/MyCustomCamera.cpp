@@ -3,8 +3,8 @@
 #include <glm/gtx/quaternion.hpp> // allows quat * vec3
 
 MyCustomCamera::MyCustomCamera() {
-	movementSpeed = 500.0f; // units per second
-	rotationSpeed = 1.0f; // radians per second (set to a reasonable value)
+	movementSpeed = 75.0f; // units per second
+	rotationSpeed = 0.75f; // radians per second (set to a reasonable value)
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f); // identity quaternion (w,x,y,z)
 
@@ -26,8 +26,8 @@ void MyCustomCamera::update(float deltaTime) {
 	if (ofGetKeyPressed('s')) move -= getqForward();
 	if (ofGetKeyPressed('a')) move -= getqSide();
 	if (ofGetKeyPressed('d')) move += getqSide();
-	if (ofGetKeyPressed('q')) move += getqUp();
-	if (ofGetKeyPressed('e')) move -= getqUp();
+	if (ofGetKeyPressed('e')) move += getqUp();
+	if (ofGetKeyPressed('q')) move -= getqUp();
 
 	if (glm::length(move) > 0.0f) {
 		move = glm::normalize(move) * movementSpeed * deltaTime;
@@ -41,8 +41,8 @@ void MyCustomCamera::update(float deltaTime) {
 	if (ofGetKeyPressed('k')) pitch(-rotationamt);
 	if (ofGetKeyPressed('j')) yaw(rotationamt);
 	if (ofGetKeyPressed('l')) yaw(-rotationamt);
-	if (ofGetKeyPressed('u')) roll(rotationamt);
-	if (ofGetKeyPressed('o')) roll(-rotationamt);
+	if (ofGetKeyPressed('o')) roll(rotationamt);
+	if (ofGetKeyPressed('u')) roll(-rotationamt);
 
 	// normalize quaternion (avoid drift)
 	orientation = glm::normalize(orientation);

@@ -3,6 +3,10 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+
+	/* -z is forward from camera start
+	y is above camera start
+	x is to the right of camera start */
 	asteroids = 200;
 	for (int i = 0; i < asteroids; i++)
 	{
@@ -13,46 +17,87 @@ void ofApp::setup(){
 				ofRandom(-800,800))); // random somwhere in space
 	}
 
+
 	gatesPassed = 0;
 	cout << gatesPassed << endl;
 
-	//ring* ring1 = new ring(100.0f, 5.0f, 50, 50, glm::vec3(0, 200, 0)); //thin ring to make as a gate for checkpoints
-	//rings.push_back(ring1);
 
-	//ring * ring2 = new ring(100.0f, 5.0f, 50, 50, glm::vec3(100, 100, 0));
-	//rings.push_back(ring2);
+	ring* r;
+	glm::vec3 pos;
+	glm::vec3 rot;
 
-	for (int i = 0; i < 10; i++) {
-		glm::vec3 pos = glm::vec3(ofRandom(-800, 800),
-			ofRandom(-600, 600),
-			ofRandom(-600, 600));
+	ofSpherePrimitive * s;
 
-		glm::vec3 rot = glm::vec3(ofRandom(0, 360),
-			ofRandom(0, 360),
-			ofRandom(0, 360)); // random orientation
+	//checkpoint 1
+	pos = glm::vec3(0, 50, -400);
+	rot = glm::vec3(230, 23, 0);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(true);
+	rings.push_back(r);
 
-		ring * r = new ring(100.0f, 15.0f, 100, 100, pos, rot);
-		rings.push_back(r);
-	}
+	//checkpoint 2
+	pos = glm::vec3(400, 400, -650);
+	rot = glm::vec3(100, 310, 0);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
 
+	//checkpoint 3
+	pos = glm::vec3(360, 400, -170);
+	rot = glm::vec3(200, 15, -65);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
 
-	
+	//checkpoint 4
+	pos = glm::vec3(310, 265, 235);
+	rot = glm::vec3(150, 0, -90);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+	//checkpoint 5
+	pos = glm::vec3(-280, 120, 550);
+	rot = glm::vec3(80, 160, 100);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+	//checkpoint 6
+	pos = glm::vec3(160, -600, 320);
+	rot = glm::vec3(25, 45, 0);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+	//////////////////////////////////////////////
+
+	s = new ofSpherePrimitive();
+	s->setPosition(glm::vec3(-300, -200, -700));
+	powerups.push_back(s);
+
 }
 
 //--------------------------------------------------------------
-void ofApp::update(){
+void ofApp::update() {
 	cam.update(0.016); // 60 fps
 
 
+	/*Shrinking and Scaling attempts right here...*/
+	/*for (ofNode& asteroid : body) {
+		asteroid.setScale(glm::distance(cam.getPosition(), asteroid.getPosition()) * 0.005);
+	}*/
 
-	for (int i = rings.size() - 1; i >= 0; i--) {
-		ring * g = rings[i];
+
+	// Ring Collision
+	for (int i = 0; i < rings.size(); i++) {
+		ring * r = rings[i];
 
 		glm::vec3 playerPos = cam.getPosition();
-		glm::vec3 toPlayer = playerPos - g->getPosition();
+		glm::vec3 toPlayer = playerPos - r->getPosition();
 
 		// Step 1: distance from plane
-		glm::vec3 n = g->getNormal();
+		glm::vec3 n = r->getNormal();
 		float distFromPlane = glm::dot(toPlayer, n);
 
 		// Step 2: reject if too far from plane
@@ -61,67 +106,65 @@ void ofApp::update(){
 
 		// Step 3: project onto plane
 		glm::vec3 proj = playerPos - distFromPlane * n;
-		float distFromCentre = glm::length(proj - g->getPosition());
+		float distFromCentre = glm::length(proj - r->getPosition());
 
 		// Step 4: check ring radius
-		if (distFromCentre <= g->getOuterR()) {
+		if (distFromCentre <= r->getOuterR() && r->getNext() == true) {
 			gatesPassed++;
 			cout << "Gate passed! Total: " << gatesPassed << endl;
 
-			delete g;
+			// If there’s another ring after this one, set it as the next goal
+			if (i + 1 < rings.size()) {
+				rings[i + 1]->setAsNext(true);
+			}
+
+			delete r;
 			rings.erase(rings.begin() + i);
+			break; //stops indexing out of range error
 		}
 	}
 
+	// PowerUp Collision
 
+	for (int i = 0; i < powerups.size(); i++) {
+		if (glm::distance(cam.getPosition(), powerups[i]->getPosition()) < powerups[i]->getRadius()) {
+			cam.setSpeed(cam.getSpeed() + 25);
+			delete powerups[i];
+			powerups.erase(powerups.begin() + i);
+		}
+	}
 
-
-
-
-	//for (ring* ring : rings) {
-
-	//	glm::vec2 playerXY(cam.getPosition().x, cam.getPosition().y);
-	//	glm::vec2 ringXY(ring->getPosition().x, ring->getPosition().y);
-
-	//	float distXY = glm::distance(playerXY, ringXY);
-	//	float zDist = abs(cam.getPosition().z - ring->getPosition().z);
-	//	if (zDist < ring->getInnerR()) {
-	//		// Inside vertical tube
-	//	}
-
-
-	//	if (distXY > ring->getOuterR() - ring->getInnerR() && distXY < ring->getOuterR() + ring->getInnerR()) {
-	//		// Player is passing through the ring horizontally
-	//		// Optionally also check Z if you want a height range
-	//		gatesPassed++;
-	//	}
-
-
-	//	//if (glm::distance(cam.getGlobalPosition(), ring->getPosition()) < ring->getOuterR()) { //right now has a spherical detction influence
-	//	//	gatesPassed += 1; //this wont work since you can go through the same gate right now
-	//	//	cout << gatesPassed << endl;
-	//	//}
-	//}
-	
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
 	cam.begin();
+
 	for (int i = 0; i < asteroids; i++)
 		body[i].draw();
 
-	for (ring* ring : rings) {
+	for (ring* ring : rings)
 		ring->draw(true); //draw every created ring
 
+	for (ofSpherePrimitive* powerup : powerups) {
+		ofPushStyle();
+		ofSetColor(255, 242, 59);
+		powerup->draw();
+		ofPopStyle();
 	}
+
 
 	cam.end();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+	switch (key){ 
+		case ('m'):
+			cout << cam.getPosition() << endl;
+		case ('n'):
+			cout << cam.getOrientation() << endl;
+	}
 }
 
 //--------------------------------------------------------------
