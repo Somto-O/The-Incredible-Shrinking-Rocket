@@ -26,6 +26,8 @@ class ofApp : public ofBaseApp{
 		
 		int asteroids;
 		int gatesPassed;
+		float timeElapsed;
+		bool started;
 
 		std::vector<ring*> rings;
 		std::vector<ofSpherePrimitive*> powerups; 

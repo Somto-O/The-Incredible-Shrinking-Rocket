@@ -21,6 +21,8 @@ void ofApp::setup(){
 	gatesPassed = 0;
 	cout << gatesPassed << endl;
 
+	started = false; //determines if the player has through the first gate
+
 
 	ring* r;
 	glm::vec3 pos;
@@ -64,23 +66,71 @@ void ofApp::setup(){
 	rings.push_back(r);
 
 	//checkpoint 6
+	pos = glm::vec3(-300, -400, 550);
+	rot = glm::vec3(100, 70, 60);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+	//checkpoint 7
 	pos = glm::vec3(160, -600, 320);
-	rot = glm::vec3(25, 45, 0);
+	rot = glm::vec3(125, 45, 0);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+	//checkpoint 8
+	pos = glm::vec3(500, -300, 50);
+	rot = glm::vec3(70, 50, 0);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+	//checkpoint 9
+	pos = glm::vec3(175, -160, -75);
+	rot = glm::vec3(100, 70, 0);
+	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
+	r->setAsNext(false);
+	rings.push_back(r);
+
+
+	//checkpoint 10
+	pos = glm::vec3(0, 0, -150);
+	rot = glm::vec3(0, 0, 0);
 	r = new ring(75.0f, 5.0f, 100, 100, pos, rot);
 	r->setAsNext(false);
 	rings.push_back(r);
 
 	//////////////////////////////////////////////
 
+	//placed near checkpoint 1
 	s = new ofSpherePrimitive();
-	s->setPosition(glm::vec3(-300, -200, -700));
+	s->setPosition(glm::vec3(-100, -50, -300));
+	powerups.push_back(s);
+
+	//placed near checkpoint 3
+	s = new ofSpherePrimitive();
+	s->setPosition(glm::vec3(300, 450, -200));
+	powerups.push_back(s);
+
+	//placed near checkpoint 5
+	s = new ofSpherePrimitive();
+	s->setPosition(glm::vec3(-300, 100, 600));
+	powerups.push_back(s);
+
+	//placed near checkpoint 7
+	s = new ofSpherePrimitive();
+	s->setPosition(glm::vec3(100, -550, 275));
 	powerups.push_back(s);
 
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
-	cam.update(0.016); // 60 fps
+	cam.update(0.016); // 60 fps //120fps on my pc
+
+	if (started)
+		timeElapsed += 0.008;
 
 
 	/*Shrinking and Scaling attempts right here...*/
@@ -110,6 +160,7 @@ void ofApp::update() {
 
 		// Step 4: check ring radius
 		if (distFromCentre <= r->getOuterR() && r->getNext() == true) {
+			started = true;
 			gatesPassed++;
 			cout << "Gate passed! Total: " << gatesPassed << endl;
 
@@ -122,6 +173,11 @@ void ofApp::update() {
 			rings.erase(rings.begin() + i);
 			break; //stops indexing out of range error
 		}
+	}
+
+	if (rings.size() == 0 && started == true) {
+		started = false; //race has finished
+		cout << "Race Finished!!! Here is your time: " << timeElapsed << " seconds" << endl;
 	}
 
 	// PowerUp Collision
@@ -153,44 +209,6 @@ void ofApp::draw(){
 		ofPopStyle();
 	}
 
-	glm::vec3 pos = cam.getPosition();
-	glm::vec3 forward = cam.getqForward(); // camera's local forward (unit)
-	glm::vec3 modelForward = glm::vec3(0.0f, 0.0f, -1.0f); // our cube model faces -Z by convention
-
-	// compute axis/angle to rotate modelForward -> forward
-	glm::vec3 axis = glm::cross(modelForward, forward);
-	float dot = glm::dot(modelForward, forward);
-	// clamp dot to [-1,1] to be numerically safe
-	if (dot > 1.0f) dot = 1.0f;
-	if (dot < -1.0f) dot = -1.0f;
-	float angleRad = acos(dot);
-	float angleDeg = glm::degrees(angleRad);
-
-	ofPushMatrix();
-	ofTranslate(pos.x, pos.y, pos.z);
-
-	// handle nearly parallel/opposite cases robustly
-	if (glm::length(axis) < 1e-6f) {
-		// axis too small: either vectors are identical (no rotation)
-		// or opposite (180°) — handle 180° as rotate around up-vector
-		if (dot < 0.0f) {
-			// rotate 180 degrees around some perpendicular axis (use world Y)
-			ofRotateDeg(180.0f, 0.0f, 1.0f, 0.0f);
-		}
-		// else dot > 0 -> no rotation needed
-	} else {
-		axis = glm::normalize(axis);
-		ofRotateDeg(angleDeg, axis.x, axis.y, axis.z);
-	}
-
-	// optional: apply additional roll so the cube's up aligns with camera up
-	// (unnecessary for simple ship cube; skip unless you want roll alignment)
-
-	ofSetColor(255, 150, 100);
-	float cubeSize = 40.0f;
-	ofDrawBox(0.0f, 0.0f, 0.0f, cubeSize); // centered cube
-
-	ofPopMatrix();
 
 	cam.end();
 }
