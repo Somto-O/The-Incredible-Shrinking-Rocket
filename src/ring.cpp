@@ -33,12 +33,8 @@ ofMesh ring::createRing() {
 				outerR * sin(theta) + innerR * N.y,
 				innerR * N.z);
 
-
-			ofColor c = ofColor(255 * (i + 0.001) / outerRes, 255 * (j + 0.001) / innerRes, 255 * 0.5);
-
 			mesh.addVertex(v);
 			mesh.addNormal(N); // applies to most recent vertex
-			mesh.addColor(c); // applies to most recent vertex
 		}
 	}
 
@@ -62,6 +58,9 @@ ofMesh ring::createRing() {
 		}
 	}
 
+	//clearing colours just in case
+	mesh.clearColors();
+
 	return mesh;
 }
 
@@ -73,12 +72,32 @@ void ring::draw(bool debugCollision = false) {
 	ofRotateDeg(rotation.y, 0, 1, 0);
 	ofRotateDeg(rotation.z, 0, 0, 1);
 
-	mesh.draw();
+
+	ofPushStyle();
+	ofFill();
+	if (nextGoal) {
+		ofSetColor(255, 240, 60);
+		
+	} else {
+		ofSetColor(160);
+	}
+	mesh.drawFaces();
+	ofPopStyle();
+
+	/*// Optionally draw a wireframe overlay so the ring shape stays visible at any brightness
+	if (nextGoal) {
+		ofPushStyle();
+		ofNoFill();
+		ofSetColor(40); // darker outline
+		mesh.drawWireframe();
+		ofPopStyle();
+	}*/
 
 	if (debugCollision) {
 		ofPushStyle();
 		ofNoFill();
 		ofSetColor(0, 255, 0, 150); // semi-transparent green
+
 
 		// draw a circle in XY plane as the “collision plane”
 		float radiusOuter = outerR + innerR;
