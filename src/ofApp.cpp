@@ -153,6 +153,44 @@ void ofApp::draw(){
 		ofPopStyle();
 	}
 
+	glm::vec3 pos = cam.getPosition();
+	glm::vec3 forward = cam.getqForward(); // camera's local forward (unit)
+	glm::vec3 modelForward = glm::vec3(0.0f, 0.0f, -1.0f); // our cube model faces -Z by convention
+
+	// compute axis/angle to rotate modelForward -> forward
+	glm::vec3 axis = glm::cross(modelForward, forward);
+	float dot = glm::dot(modelForward, forward);
+	// clamp dot to [-1,1] to be numerically safe
+	if (dot > 1.0f) dot = 1.0f;
+	if (dot < -1.0f) dot = -1.0f;
+	float angleRad = acos(dot);
+	float angleDeg = glm::degrees(angleRad);
+
+	ofPushMatrix();
+	ofTranslate(pos.x, pos.y, pos.z);
+
+	// handle nearly parallel/opposite cases robustly
+	if (glm::length(axis) < 1e-6f) {
+		// axis too small: either vectors are identical (no rotation)
+		// or opposite (180°) — handle 180° as rotate around up-vector
+		if (dot < 0.0f) {
+			// rotate 180 degrees around some perpendicular axis (use world Y)
+			ofRotateDeg(180.0f, 0.0f, 1.0f, 0.0f);
+		}
+		// else dot > 0 -> no rotation needed
+	} else {
+		axis = glm::normalize(axis);
+		ofRotateDeg(angleDeg, axis.x, axis.y, axis.z);
+	}
+
+	// optional: apply additional roll so the cube's up aligns with camera up
+	// (unnecessary for simple ship cube; skip unless you want roll alignment)
+
+	ofSetColor(255, 150, 100);
+	float cubeSize = 40.0f;
+	ofDrawBox(0.0f, 0.0f, 0.0f, cubeSize); // centered cube
+
+	ofPopMatrix();
 
 	cam.end();
 }
