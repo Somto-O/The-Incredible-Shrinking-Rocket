@@ -12,6 +12,8 @@ Ship::Ship() {
 	BASE_FORWARD = glm::vec3(0, 0, -1);
 	BASE_UP = glm::vec3(0, 1, 0);
 	BASE_SIDE = glm::vec3(1, 0, 0);
+
+	scale = 1.0f;
 }
 
 void Ship::update(float deltaTime) {
@@ -25,7 +27,7 @@ void Ship::update(float deltaTime) {
 	if (ofGetKeyPressed('e')) move -= getUp();
 
 	if (glm::length(move) > 0.0f) {
-		move = glm::normalize(move) * movementSpeed * deltaTime;
+		move = glm::normalize(move) * getEffectiveSpeed() * deltaTime;
 		position += move;
 	}
 
@@ -57,6 +59,10 @@ float Ship::getSpeed() const {
 	return movementSpeed;
 }
 
+float Ship::getEffectiveSpeed() const {
+	return movementSpeed / scale;
+}
+
 void Ship::setSpeed(float speed) {
 	movementSpeed = speed;
 }
@@ -80,6 +86,16 @@ void Ship::roll(float amt) {
 	orientation = glm::normalize(q * orientation);
 }
 
+void Ship::grow(float factor) {
+	scale *= factor;
+	if (scale > 2.0f) scale = 2.0f; // max size
+}
+
+void Ship::shrink(float factor) {
+	scale *= factor;
+	if (scale < 0.2f) scale = 0.2f; // min size
+}
+
 void Ship::draw() {
 	ofPushMatrix();
 	ofPushStyle();
@@ -89,6 +105,9 @@ void Ship::draw() {
 	// apply orientation
 	glm::mat4 m = glm::toMat4(orientation);
 	ofMultMatrix(ofMatrix4x4(m));
+
+	// apply scale
+	ofScale(scale, scale, scale);
 
 	ofSetColor(255, 100, 100);
 	ofDrawBox(0, 0, 0, 40); // placeholder cube

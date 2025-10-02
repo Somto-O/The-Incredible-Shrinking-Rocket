@@ -151,6 +151,8 @@ void ofApp::update() {
 	float dt = ofGetLastFrameTime();
 	if (dt <= 0) return;
 
+	float shipRadius = ship.getScale() * 20.0f;
+
 	// update ship (handles its movement + rotations, including roll)
 	ship.update(dt);
 	// update camera to follow ship
@@ -173,7 +175,8 @@ void ofApp::update() {
 		float distFromPlane = glm::dot(toPlayer, n);
 
 		// Step 2: reject if too far from plane
-		if (fabs(distFromPlane) > 20.0f) // tolerance (gate thickness)
+		float planeTolerance = 20.0f + shipRadius;
+		if (fabs(distFromPlane) > planeTolerance) // tolerance (gate thickness)
 			continue;
 
 		// Step 3: project onto plane
@@ -181,7 +184,7 @@ void ofApp::update() {
 		float distFromCentre = glm::length(proj - r->getPosition());
 
 		// Step 4: check ring radius
-		if (distFromCentre <= r->getOuterR() && r->getNext() == true) {
+		if (distFromCentre <= (r->getOuterR() - shipRadius) && r->getNext() == true) {
 			started = true;
 			gatesPassed++;
 			cout << "Gate passed! Total: " << gatesPassed << endl;
@@ -205,7 +208,7 @@ void ofApp::update() {
 	// PowerUp Collision
 
 	for (int i = 0; i < powerups.size(); i++) {
-		if (glm::distance(ship.getPosition(), powerups[i]->getPosition()) < powerups[i]->getRadius()) {
+		if (glm::distance(ship.getPosition(), powerups[i]->getPosition()) < powerups[i]->getRadius() + shipRadius) {
 			ship.setSpeed(ship.getSpeed() + 25);
 			delete powerups[i];
 			powerups.erase(powerups.begin() + i);
@@ -216,12 +219,12 @@ void ofApp::update() {
 	// Enemy tracking and collision
 	for (int i = 0; i < (int)enemies.size(); i++) {
 		glm::vec3 e2p = ship.getPosition() - enemies[i]->getPosition(); // e2p is the enemy to player vector
-		glm::vec3 dir = glm::normalize(e2p);
 		float dist = glm::length(e2p);
+		glm::vec3 dir = (dist > 1e-6f) ? glm::normalize(e2p) : glm::vec3(0.0f);
 
 		enemies[i]->setPosition(enemies[i]->getPosition() + dir * speed * 17.0f); // Move towards player
 
-		if (glm::distance(enemies[i]->getPosition(), ship.getPosition()) < enemies[i]->getRadius()) { // collision check
+		if (glm::distance(enemies[i]->getPosition(), ship.getPosition()) < enemies[i]->getRadius() + shipRadius) { // collision check
 			cout << "Hit by enemy! GAME OVER" << endl;
 			ofExit(); // Closes the game
 		}
@@ -231,6 +234,14 @@ void ofApp::update() {
 //--------------------------------------------------------------
 void ofApp::draw() {
 	cam.begin();
+
+	float invScale = 1.0f / ship.getScale();
+	glm::vec3 shipPos = ship.getPosition();
+
+	ofPushMatrix();
+	ofTranslate(shipPos.x, shipPos.y, shipPos.z);
+	ofScale(invScale, invScale, invScale);
+	ofTranslate(-shipPos.x, -shipPos.y, -shipPos.z);
 
 	for (int i = 0; i < asteroids; i++)
 		body[i].draw();
@@ -252,8 +263,10 @@ void ofApp::draw() {
 		ofPopStyle();
 	}
 
+	ofPopMatrix();
+
 	ship.draw();
-	
+
 	cam.end();
 }
 
@@ -264,6 +277,12 @@ void ofApp::keyPressed(int key) {
 		cout << cam.getPosition() << endl;
 	case ('n'):
 		cout << cam.getOrientation() << endl;
+	case ('v'):
+		ship.shrink(0.9f);
+		break;
+	case ('b'):
+		ship.grow(1.1f);
+		break;
 	}
 }
 
