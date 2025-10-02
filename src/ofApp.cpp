@@ -1,8 +1,7 @@
 #include "ofApp.h"
 
-
 //--------------------------------------------------------------
-void ofApp::setup(){
+void ofApp::setup() {
 
 	/* -z is forward from camera start
 	y is above camera start
@@ -11,28 +10,25 @@ void ofApp::setup(){
 
 	speed = 0.1; // Used in calculation with enemies to player
 	asteroids = 200;
-	for (int i = 0; i < asteroids; i++)
-	{
+	for (int i = 0; i < asteroids; i++) {
 		body[i].setPosition(
 			glm::vec3(
-				ofRandom(-800,800),
-				ofRandom(-800,800),
-				ofRandom(-800,800))); // Random somewhere in space
+				ofRandom(-800, 800),
+				ofRandom(-800, 800),
+				ofRandom(-800, 800))); // Random somewhere in space
 	}
-
 
 	gatesPassed = 0;
 	cout << gatesPassed << endl;
 
 	started = false; // Determines if the player has gone through the first gate
 
-
-	ring* r;
+	ring * r;
 	glm::vec3 pos;
 	glm::vec3 rot;
 
-	ofSpherePrimitive* s;
-	ofSpherePrimitive* e;
+	ofSpherePrimitive * s;
+	ofSpherePrimitive * e;
 
 	//checkpoint 1
 	pos = glm::vec3(0, 50, -400);
@@ -97,7 +93,6 @@ void ofApp::setup(){
 	r->setAsNext(false);
 	rings.push_back(r);
 
-
 	//checkpoint 10
 	pos = glm::vec3(0, 0, -150);
 	rot = glm::vec3(0, 0, 0);
@@ -149,32 +144,28 @@ void ofApp::setup(){
 	e->setScale(0.3);
 	e->setPosition(glm::vec3(800, -800, 800)); // Bottom y and furthest right of map and back behind player
 	enemies.push_back(e);
-
 }
 
 //--------------------------------------------------------------
 void ofApp::update() {
-	cam.update(0.016); // 60 fps //120fps on my pc
+	float dt = ofGetLastFrameTime();
+	if (dt <= 0) return;
 
-	float delta_time = ofGetElapsedTimef(); // Store the amount of time in between the last reset
-	ofResetElapsedTimeCounter; // Reset so it can be recounted when update reruns next
+	// update ship (handles its movement + rotations, including roll)
+	ship.update(dt);
+	// update camera to follow ship
+	cam.update(ship, dt);
 
-
-	if (started)
-		timeElapsed += 0.008;
-
-
-	/*Shrinking and Scaling attempts right here...*/
-	/*for (ofNode& asteroid : body) {
-		asteroid.setScale(glm::distance(cam.getPosition(), asteroid.getPosition()) * 0.005);
-	}*/
-
+	// timing for race
+	if (started) {
+		timeElapsed += dt;
+	}
 
 	// Ring Collision
-	for (int i = 0; i < rings.size(); i++) {
+	for (int i = 0; i < (int)rings.size(); i++) {
 		ring * r = rings[i];
 
-		glm::vec3 playerPos = cam.getPosition();
+		glm::vec3 playerPos = ship.getPosition();
 		glm::vec3 toPlayer = playerPos - r->getPosition();
 
 		// Step 1: distance from plane
@@ -214,42 +205,40 @@ void ofApp::update() {
 	// PowerUp Collision
 
 	for (int i = 0; i < powerups.size(); i++) {
-		if (glm::distance(cam.getPosition(), powerups[i]->getPosition()) < powerups[i]->getRadius()) {
-			cam.setSpeed(cam.getSpeed() + 25);
+		if (glm::distance(ship.getPosition(), powerups[i]->getPosition()) < powerups[i]->getRadius()) {
+			ship.setSpeed(ship.getSpeed() + 25);
 			delete powerups[i];
 			powerups.erase(powerups.begin() + i);
+			--i;
 		}
 	}
 
 	// Enemy tracking and collision
-	for (int i = 0; i < enemies.size(); i++) {
-		glm::vec3 e2p = cam.getPosition() - enemies[i]->getPosition(); // e2p is the enemy to player vector
+	for (int i = 0; i < (int)enemies.size(); i++) {
+		glm::vec3 e2p = ship.getPosition() - enemies[i]->getPosition(); // e2p is the enemy to player vector
 		glm::vec3 dir = glm::normalize(e2p);
 		float dist = glm::length(e2p);
 
-		enemies[i]->setPosition(enemies[i]->getPosition() + dir * speed * delta_time); // Move towards player
+		enemies[i]->setPosition(enemies[i]->getPosition() + dir * speed * 17.0f); // Move towards player
 
-		if (glm::distance(enemies[i]->getPosition(), cam.getPosition()) < enemies[i]->getRadius()) { // collision check
+		if (glm::distance(enemies[i]->getPosition(), ship.getPosition()) < enemies[i]->getRadius()) { // collision check
 			cout << "Hit by enemy! GAME OVER" << endl;
 			ofExit(); // Closes the game
-
 		}
-
 	}
-
 }
 
 //--------------------------------------------------------------
-void ofApp::draw(){
+void ofApp::draw() {
 	cam.begin();
 
 	for (int i = 0; i < asteroids; i++)
 		body[i].draw();
 
-	for (ring* ring : rings)
+	for (ring * ring : rings)
 		ring->draw(true);
 
-	for (ofSpherePrimitive* powerup : powerups) {
+	for (ofSpherePrimitive * powerup : powerups) {
 		ofPushStyle();
 		ofSetColor(255, 242, 59);
 		powerup->draw();
@@ -263,106 +252,57 @@ void ofApp::draw(){
 		ofPopStyle();
 	}
 
-	glm::vec3 pos = cam.getPosition();
-	glm::vec3 forward = cam.getqForward(); // camera's local forward (unit)
-	glm::vec3 modelForward = glm::vec3(0.0f, 0.0f, -1.0f); // our cube model faces -Z by convention
-
-	// compute axis/angle to rotate modelForward -> forward
-	glm::vec3 axis = glm::cross(modelForward, forward);
-	float dot = glm::dot(modelForward, forward);
-	// clamp dot to [-1,1] to be numerically safe
-	if (dot > 1.0f) dot = 1.0f;
-	if (dot < -1.0f) dot = -1.0f;
-	float angleRad = acos(dot);
-	float angleDeg = glm::degrees(angleRad);
-
-
-	//ship.draw();
-
-	// draw the ship cube
-	ofPushMatrix();
-	ofPushStyle(); // <---- save color/material state
-
-	ofTranslate(pos.x, pos.y, pos.z);
-
-	// handle nearly parallel/opposite cases robustly
-	if (glm::length(axis) < 1e-6f) {
-		if (dot < 0.0f) {
-			ofRotateDeg(180.0f, 0.0f, 1.0f, 0.0f);
-		}
-	} else {
-		axis = glm::normalize(axis);
-		ofRotateDeg(angleDeg, axis.x, axis.y, axis.z);
-	}
-
-	ofSetColor(255, 150, 100); // ship color
-	float cubeSize = 40.0f;
-	ofDrawBox(0.0f, 0.0f, 0.0f, cubeSize);
-
-	ofPopStyle(); // <---- restore color/material state
-	ofPopMatrix();
-
-
+	ship.draw();
+	
 	cam.end();
 }
 
 //--------------------------------------------------------------
-void ofApp::keyPressed(int key){
-	switch (key){ 
-		case ('m'):
-			cout << cam.getPosition() << endl;
-		case ('n'):
-			cout << cam.getOrientation() << endl;
+void ofApp::keyPressed(int key) {
+	switch (key) {
+	case ('m'):
+		cout << cam.getPosition() << endl;
+	case ('n'):
+		cout << cam.getOrientation() << endl;
 	}
 }
 
 //--------------------------------------------------------------
-void ofApp::keyReleased(int key){
-
+void ofApp::keyReleased(int key) {
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
-
+void ofApp::mouseMoved(int x, int y) {
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-
+void ofApp::mouseDragged(int x, int y, int button) {
 }
 
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-
+void ofApp::mousePressed(int x, int y, int button) {
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
+void ofApp::mouseReleased(int x, int y, int button) {
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y){
-
+void ofApp::mouseEntered(int x, int y) {
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y){
-
+void ofApp::mouseExited(int x, int y) {
 }
 
 //--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
+void ofApp::windowResized(int w, int h) {
 }
 
 //--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
+void ofApp::gotMessage(ofMessage msg) {
 }
 
 //--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+void ofApp::dragEvent(ofDragInfo dragInfo) {
 }
-

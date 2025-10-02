@@ -3,6 +3,7 @@
 #include "ofMain.h"
 #include "MyCustomCamera.h"
 #include "ring.h"
+#include "ship.h"
 
 class ofApp : public ofBaseApp{
 
@@ -38,4 +39,5 @@ class ofApp : public ofBaseApp{
 		ofNode body[500];
 
 		MyCustomCamera cam;
+		Ship ship;
 };
