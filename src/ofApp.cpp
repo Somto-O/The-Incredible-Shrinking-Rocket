@@ -202,7 +202,8 @@ void ofApp::update() {
 
 	if (rings.size() == 0 && started == true) {
 		started = false; // Race has finished
-		cout << "Race Finished!!! Here is your time: " << timeElapsed << " seconds" << endl;
+		victory = true;
+		endTimer = 3.0f; // 3 seconds until game closes
 	}
 
 	// PowerUp Collision
@@ -225,8 +226,17 @@ void ofApp::update() {
 		enemies[i]->setPosition(enemies[i]->getPosition() + dir * speed * 17.0f); // Move towards player
 
 		if (glm::distance(enemies[i]->getPosition(), ship.getPosition()) < enemies[i]->getRadius() + shipRadius) { // collision check
-			cout << "Hit by enemy! GAME OVER" << endl;
-			ofExit(); // Closes the game
+			if (!gameOver) {
+				gameOver = true;
+				endTimer = 3.0f; // 3 seconds until game closes
+			}
+		}
+	}
+
+	if ((gameOver || victory) && endTimer > 0.0f) {
+		endTimer -= dt;
+		if (endTimer <= 0.0f) {
+			ofExit(); // Close the game after a short delay
 		}
 	}
 }
@@ -268,6 +278,20 @@ void ofApp::draw() {
 	ship.draw();
 
 	cam.end();
+
+	if (gameOver) {
+		ofPushStyle();
+		ofSetColor(139, 0, 0, 255);
+		ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
+		ofPopStyle();
+	}
+
+	if (victory) {
+		ofPushStyle();
+		ofSetColor(144, 238, 144, 255);
+		ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
+		ofPopStyle();
+	}
 }
 
 //--------------------------------------------------------------
