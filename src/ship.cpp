@@ -53,6 +53,14 @@ glm::vec3 Ship::getSide() const {
 	return glm::normalize(orientation * BASE_SIDE);
 }
 
+float Ship::getSpeed() const {
+	return movementSpeed;
+}
+
+void Ship::setSpeed(float speed) {
+	movementSpeed = speed;
+}
+
 void Ship::moveForward(float amt) { position += getForward() * amt; }
 void Ship::moveRight(float amt) { position += getSide() * amt; }
 void Ship::moveUp(float amt) { position += getUp() * amt; }
@@ -80,7 +88,7 @@ void Ship::draw() {
 
 	// apply orientation
 	glm::mat4 m = glm::toMat4(orientation);
-	ofMultMatrix(m);
+	ofMultMatrix(ofMatrix4x4(m));
 
 	ofSetColor(255, 100, 100);
 	ofDrawBox(0, 0, 0, 40); // placeholder cube

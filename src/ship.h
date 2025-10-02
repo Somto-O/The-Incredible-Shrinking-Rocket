@@ -13,6 +13,8 @@ public:
 	glm::vec3 getForward() const;
 	glm::vec3 getUp() const;
 	glm::vec3 getSide() const;
+	float getSpeed() const;
+	void setSpeed(float speed);
 
 	// movement + rotation
 	void moveForward(float amt);
