@@ -42,6 +42,11 @@ private:
 	float movementSpeed;
 	float rotationSpeed;
 
+	float currentSpeed;
+	float maxSpeed;
+	float accelRate;
+	float decelRate;
+
 	// base axes
 	glm::vec3 BASE_FORWARD;
 	glm::vec3 BASE_UP;

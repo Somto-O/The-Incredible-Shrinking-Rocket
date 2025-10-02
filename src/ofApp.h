@@ -30,6 +30,9 @@ class ofApp : public ofBaseApp{
 		float timeElapsed;
 		bool started;
 		float speed;
+		bool gameOver = false;
+		bool victory = false;
+		float endTimer = 0.0f;
 
 		std::vector<ring*> rings;
 		std::vector<ofSpherePrimitive*> powerups;

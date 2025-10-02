@@ -14,17 +14,33 @@ Ship::Ship() {
 	BASE_SIDE = glm::vec3(1, 0, 0);
 
 	scale = 1.0f;
+
+	currentSpeed = 0.0f;
+	maxSpeed = 600.0f;
+	accelRate = 200.0f; // both are units/sec^2
+	decelRate = 200.0f;
 }
 
 void Ship::update(float deltaTime) {
 	glm::vec3 move(0);
 
-	if (ofGetKeyPressed('w')) move += getForward();
-	if (ofGetKeyPressed('s')) move -= getForward();
+	if (ofGetKeyPressed('w')) {
+		currentSpeed += accelRate * deltaTime;
+		if (currentSpeed > maxSpeed) currentSpeed = maxSpeed;
+	}
+	if (ofGetKeyPressed('s')) {
+		currentSpeed -= decelRate * deltaTime;
+		if (currentSpeed < 0.0f) currentSpeed = 0.0f;
+	}
+
+	if (fabs(currentSpeed) > 1e-6f) {
+		position += getForward() * currentSpeed * deltaTime;
+	}
+
 	if (ofGetKeyPressed('a')) move -= getSide();
 	if (ofGetKeyPressed('d')) move += getSide();
-	if (ofGetKeyPressed('q')) move += getUp();
-	if (ofGetKeyPressed('e')) move -= getUp();
+	if (ofGetKeyPressed('e')) move += getUp();
+	if (ofGetKeyPressed('q')) move -= getUp();
 
 	if (glm::length(move) > 0.0f) {
 		move = glm::normalize(move) * getEffectiveSpeed() * deltaTime;
