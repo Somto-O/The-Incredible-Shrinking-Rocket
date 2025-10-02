@@ -14,6 +14,10 @@ public:
 	glm::vec3 getUp() const;
 	glm::vec3 getSide() const;
 	float getSpeed() const;
+	float getEffectiveSpeed() const;
+	float getScale() const { return scale; }
+
+	// setter
 	void setSpeed(float speed);
 
 	// movement + rotation
@@ -28,6 +32,9 @@ public:
 	// draw the ship
 	void draw();
 
+	void grow(float factor);
+	void shrink(float factor);
+
 private:
 	glm::vec3 position;
 	glm::quat orientation;
@@ -39,4 +46,6 @@ private:
 	glm::vec3 BASE_FORWARD;
 	glm::vec3 BASE_UP;
 	glm::vec3 BASE_SIDE;
+
+	float scale;
 };
